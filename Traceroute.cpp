@@ -10,12 +10,7 @@ struct rec {					/* format of outgoing UDP data */
   struct timeval	rec_tv;		/* time packet left */
 };
 
-#define TIMEOUT 2
-#define SUCCESS 1
-#define CONTINUE 0
-#define FAILURE -1
-
-Traceroute::Traceroute(char *name, int timeot, int maxt, int vrb)
+Traceroute::Traceroute(char *name, int tmout, int maxt, int vrb)
     :targetIp("")
     ,maxttl(maxt)
     ,verbose(vrb)
@@ -24,7 +19,7 @@ Traceroute::Traceroute(char *name, int timeot, int maxt, int vrb)
     ,seq(0)
     ,ttl(0)
     ,pid(getpid())
-    ,timeout(timeot)
+    ,timeout(tmout)
 {
     targetIp = getAddrByName(name);
     initialize();
@@ -64,7 +59,7 @@ std::string Traceroute::getAddrByName(char *name)
     char str[INET_ADDRSTRLEN];
     struct hostent *res = gethostbyname(name);
     ptr = res->h_addr_list;
-    if(*ptr!=NULL){
+    if(*ptr!=NULL){                             //Just return the first one.
         inet_ntop(res->h_addrtype,*ptr,str,sizeof(str));
         return str;
     }
@@ -84,46 +79,46 @@ void Traceroute::sendMessage()
     binder.sin_port = htons(srcPort);
     binder.sin_addr.s_addr = htonl(INADDR_ANY);
     re=bind(sendfd,(sockaddr *)&binder,sizeof(binder));
-    if(re < 0){
+    if(re < 0){                                         //check bind error.
         printf("BIND ERROR!\n");
         return;
     }
 //    printf("bind res:%d srcPort:%d\n",re,srcPort);
-    if(errno!=0){
+    if(errno!=0){                                       //print error number.
         printf("ERRNO:%d\n",errno);
     }
-    for(ttl = 1;ttl<=maxttl;++ttl)
+    for(ttl = 1;ttl<=maxttl;++ttl)                      //send upd packets.ttl:1~maxttl
     {
-        re=setsockopt(sendfd,IPPROTO_IP,IP_TTL,&ttl,sizeof(ttl));
-        if(re<0){
+        re=setsockopt(sendfd,IPPROTO_IP,IP_TTL,&ttl,sizeof(ttl)); //set ip packet's ttl
+        if(re<0){                                       //check setsockopt error.
             printf("SETSOCKOPT ERROR!\n");
         }
         printf("%d  ",ttl);
 //        printf("setsockopt %d\n",re);
-        memset(sendbuf,0,sizeof(sendbuf));
+        memset(sendbuf,0,sizeof(sendbuf));              //set some data of udp packet.
         recPtr = (struct rec *) sendbuf;
         recPtr->rec_seq = seq++;
         recPtr->rec_ttl = ttl;
         recPtr->rec_pid = getpid();
         gettimeofday(&recPtr->rec_tv, NULL);
 
-        for(int i=0;i<verbose;++i)
+        for(int i=0;i<verbose;++i)                      //send [verbose] udp packets for each ttl.
         {
-            dstPort = 60000+seq*2+i;
+            dstPort = 60000+seq*2+i;                    //try another port. wish remote host to refuse this packet.
             dst.sin_family = AF_INET;
             dst.sin_port = htons(dstPort);
             inet_pton(AF_INET,targetIp.c_str(),&dst.sin_addr);
             gettimeofday(&begin, NULL);
-            re=sendto(sendfd,sendbuf,sizeof(rec),0,(sockaddr *)&dst,sizeof(dst));
-            if(re<0){
+            re=sendto(sendfd,sendbuf,sizeof(rec),0,(sockaddr *)&dst,sizeof(dst));// send udp packet.
+            if(re<0){                                   //check sendto error.
                 printf("SENDTO ERROR!\n");
             }
-            if(errno!=0){
+            if(errno!=0){                               //print error number.
                 printf("ERRNO:%d\n",errno);
             }
-            result = recvMessage();
+            result = recvMessage();                     //receive icmp packet to show route.
             gettimeofday(&end, NULL);
-            times = (end.tv_sec-begin.tv_sec)*1000+(end.tv_usec-begin.tv_usec)/1000;
+            times = (end.tv_sec-begin.tv_sec)*1000+(end.tv_usec-begin.tv_usec)/1000;//calculate elapsed time.
             if(result == CONTINUE || result == SUCCESS){
                 printf("(%dms)  ",times);
             }
@@ -131,7 +126,7 @@ void Traceroute::sendMessage()
         }
         printf("\n");
         if(result == SUCCESS){
-            printf("Traceroute Finish!\n");
+            printf("Traceroute Finish!\n");             //udp packet has arrived at remote host.
             break;
         }
 
@@ -156,18 +151,18 @@ int Traceroute::recvMessage()
         maxfd = recvfd+1;
         timeo.tv_sec = timeout / 1000;
         timeo.tv_usec = timeout % 1000;
-        n=select(maxfd,&readfds,NULL,NULL,&timeo);
+        n=select(maxfd,&readfds,NULL,NULL,&timeo);      //wait for fd gets ready.
         if(n<1){
             printf("*  ");
             result = TIMEOUT;
             break;
         }
-        if(!FD_ISSET(recvfd,&readfds)){
+        if(!FD_ISSET(recvfd,&readfds)){                 //check fd.
             printf("FDSET ERROR!  ");
             continue;
         }
         memset(recvbuf,0,sizeof(recvbuf));
-        n=recvfrom(recvfd,recvbuf,sizeof(recvbuf),0,(sockaddr *)&src,(socklen_t *)&recvlen);
+        n=recvfrom(recvfd,recvbuf,sizeof(recvbuf),0,(sockaddr *)&src,(socklen_t *)&recvlen); //read icmp packet.
 //        printf("recv %d line.\n",n);
         ipPtr = (struct ip*)recvbuf;
         icmpPtr = (struct icmp*)(recvbuf+(ipPtr->ip_hl<<2));
@@ -192,9 +187,9 @@ int Traceroute::recvMessage()
         iipPtr = (struct ip*)(recvbuf+(ipPtr->ip_hl<<2)+8);
         udpPtr = (struct udphdr *)(recvbuf+(ipPtr->ip_hl<<2)+8+(iipPtr->ip_hl<<2));
 //        printf("udp dst:%d[%d] src:%d[%d]\n",ntohs(udpPtr->dest),dstPort,ntohs(udpPtr->source),srcPort);
-        if(icmpPtr->icmp_type == ICMP_TIMXCEED &&
+        if(icmpPtr->icmp_type == ICMP_TIMXCEED &&                           //udp packet time exceeded.
            icmpPtr->icmp_code == ICMP_TIMXCEED_INTRANS){
-            if(iipPtr->ip_p == IPPROTO_UDP &&
+            if(iipPtr->ip_p == IPPROTO_UDP &&                               //check the icmp packet's src and dst port.
                 ntohs(udpPtr->dest) == dstPort &&
                 ntohs(udpPtr->source) == srcPort){
                 printf("%s  ",ipsrc);
@@ -214,11 +209,11 @@ int Traceroute::recvMessage()
             }
 
         }
-        else if(icmpPtr->icmp_type == ICMP_UNREACH &&
+        else if(icmpPtr->icmp_type == ICMP_UNREACH &&                   //udp packet has arrived at remote host.
                 icmpPtr->icmp_code == ICMP_UNREACH_PORT){
             if(iipPtr->ip_p == IPPROTO_UDP &&
                 ntohs(udpPtr->dest) == dstPort &&
-                ntohs(udpPtr->source) == srcPort){
+                ntohs(udpPtr->source) == srcPort){                      //check the icmp packet's src and dst port.
                 printf("%s  ",ipsrc);
                 result = SUCCESS;
             }
