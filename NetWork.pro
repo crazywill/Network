@@ -4,9 +4,10 @@ CONFIG -= qt
 
 SOURCES += main.cpp \
     Ping.cpp \
-    Traceroute.cpp
+    Traceroute.cpp \
+
 
 HEADERS += \
     Ping.h \
-    Traceroute.h
+    Traceroute.h \
 

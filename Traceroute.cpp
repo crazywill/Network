@@ -6,14 +6,15 @@
 struct rec {					/* format of outgoing UDP data */
   u_short	rec_seq;			/* sequence number */
   u_short	rec_ttl;			/* TTL packet left with */
-  int       rec_pid;
+  int       rec_pid;            /* process id */
   struct timeval	rec_tv;		/* time packet left */
 };
 
-
+#define TIMEOUT 2
 #define SUCCESS 1
 #define CONTINUE 0
 #define FAILURE -1
+
 Traceroute::Traceroute(char *name, int timeot, int maxt, int vrb)
     :targetIp("")
     ,maxttl(maxt)
@@ -41,7 +42,6 @@ void Traceroute::run()
 
 void Traceroute::initialize()
 {
-    printf("sizeof(rec):%d\n",sizeof(rec));
     //init sendfd
     sendfd = socket(AF_INET,SOCK_DGRAM, 0);
     memset(&dst,0,sizeof(dst));
@@ -74,14 +74,21 @@ std::string Traceroute::getAddrByName(char *name)
 void Traceroute::sendMessage()
 {
     int re;
+    int result;
     rec * recPtr;
-
+    int times=0;
+    struct timeval begin;
+    struct timeval end;
     srcPort = (getpid() & 0xffff) | 0x8000;
     binder.sin_family = AF_INET;
     binder.sin_port = htons(srcPort);
     binder.sin_addr.s_addr = htonl(INADDR_ANY);
     re=bind(sendfd,(sockaddr *)&binder,sizeof(binder));
-    printf("bind res:%d srcPort:%d\n",re,srcPort);
+    if(re < 0){
+        printf("BIND ERROR!\n");
+        return;
+    }
+//    printf("bind res:%d srcPort:%d\n",re,srcPort);
     if(errno!=0){
         printf("ERRNO:%d\n",errno);
     }
@@ -106,6 +113,7 @@ void Traceroute::sendMessage()
             dst.sin_family = AF_INET;
             dst.sin_port = htons(dstPort);
             inet_pton(AF_INET,targetIp.c_str(),&dst.sin_addr);
+            gettimeofday(&begin, NULL);
             re=sendto(sendfd,sendbuf,sizeof(rec),0,(sockaddr *)&dst,sizeof(dst));
             if(re<0){
                 printf("SENDTO ERROR!\n");
@@ -113,14 +121,19 @@ void Traceroute::sendMessage()
             if(errno!=0){
                 printf("ERRNO:%d\n",errno);
             }
-
-            if(recvMessage()==SUCCESS){
-                fflush(stdout);
-                break;
+            result = recvMessage();
+            gettimeofday(&end, NULL);
+            times = (end.tv_sec-begin.tv_sec)*1000+(end.tv_usec-begin.tv_usec)/1000;
+            if(result == CONTINUE || result == SUCCESS){
+                printf("(%dms)  ",times);
             }
             fflush(stdout);
         }
         printf("\n");
+        if(result == SUCCESS){
+            printf("Traceroute Finish!\n");
+            break;
+        }
 
     }
 }
@@ -146,6 +159,7 @@ int Traceroute::recvMessage()
         n=select(maxfd,&readfds,NULL,NULL,&timeo);
         if(n<1){
             printf("*  ");
+            result = TIMEOUT;
             break;
         }
         if(!FD_ISSET(recvfd,&readfds)){
@@ -228,10 +242,11 @@ int Traceroute::recvMessage()
         }
         break;
     }
+    return result;
 }
 
 void Traceroute::runImpl()
 {
-    printf("traceroute to %s %d hops max\n",targetIp.c_str(),maxttl);
+    printf("Traceroute %s,%d hops max,%d bytes packets\n",targetIp.c_str(),maxttl,sizeof(rec));
     sendMessage();
 }

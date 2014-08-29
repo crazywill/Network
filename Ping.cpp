@@ -123,7 +123,7 @@ void pingShot(const char *dstip, int timeout)
     bzero(&dst,sizeof(dst));
     dst.sin_addr.s_addr = inet_addr(dstip);
     dst.sin_family = AF_INET;
-    dst.sin_port = 60000;
+    dst.sin_port = htons(30000);
 
     socketfd = socket(AF_INET,SOCK_RAW,IPPROTO_ICMP);
 
@@ -171,13 +171,10 @@ void pingShot(const char *dstip, int timeout)
                 continue;
             }
             memset(recvbuf, 0, sizeof(recvbuf));
-            recvLen = sizeof(src);
+            memset(&src,0,sizeof(src));
             rcvBytes = recvfrom(socketfd,recvbuf,sizeof(recvbuf),0,(struct sockaddr *)&src,(socklen_t *)&recvLen);
             if(rcvBytes<1){
                 break;
-            }
-            if(strcmp(inet_ntoa(src.sin_addr),dstip)!=0){
-                printf("ip error! ip is %s\n",inet_ntoa(src.sin_addr));
             }
 
             iph = (struct ip *)recvbuf;
@@ -185,13 +182,17 @@ void pingShot(const char *dstip, int timeout)
             char ipdst[64] = {'\0'};
             snprintf(ipsrc,64,"%s",inet_ntoa(iph->ip_src));
             snprintf(ipdst,64,"%s",inet_ntoa(iph->ip_dst));
+            if(strcmp(ipsrc,dstip)!=0){
+                printf("ip error! ip is %s\n",ipsrc);
+                continue;
+            }
 //                printf("total len=[%d] headersiez=[%d]  destip=[%d.%d.%d.%d]\n",tl,sizeof(struct ip),(unsigned char)*(recvbuf+16),(unsigned char)*(recvbuf+17),(unsigned char)*(recvbuf+18),(unsigned char)*(recvbuf+19));
             //show ip header
-                printf("ip_hl<<2:%d ip_len:%u ip_ttl:%d src:%s dst:%s\n",(iph->ip_hl<<2)
-                                                                      ,iph->ip_len
-                                                                      ,iph->ip_ttl
-                                                                      ,ipsrc
-                                                                      ,ipdst);
+//                printf("ip_hl<<2:%d ip_len:%u ip_ttl:%d src:%s dst:%s\n",(iph->ip_hl<<2)
+//                                                                      ,iph->ip_len
+//                                                                      ,iph->ip_ttl
+//                                                                      ,ipsrc
+//                                                                      ,ipdst);
             icmpPtr=(struct icmp *)(recvbuf + (iph->ip_hl<<2));
             timevalPtr = (struct timeval *)icmpPtr->icmp_data;
             gettimeofday(&timevalNow,NULL);

@@ -11,7 +11,9 @@
 #include <string>
 #include <list>
 
+
 #define MAXLENGTH 1200
+
 
 class Traceroute
 {
