@@ -5,7 +5,8 @@ CONFIG -= qt
 SOURCES += main.cpp \
     Eginx.cpp \
     Implementation/Master.cpp \
-    Implementation/Worker.cpp
+    Implementation/Worker.cpp \
+    Implementation/Configreader.cpp
 
 HEADERS += \
     Eginx.h \
@@ -16,5 +17,9 @@ HEADERS += \
     Interface/IComponent.h \
     Interface/IExecutor.h \
     Implementation/Master.h \
-    Implementation/Worker.h
+    Implementation/Worker.h \
+    Interface/IConfigReader.h \
+    Implementation/Configreader.h \
+    Utility/PubDefine.h \
+    Utility/Log.h
 

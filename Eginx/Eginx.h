@@ -2,7 +2,6 @@
 #define EGINX_H
 
 #include "Utility/ScopedPtr.h"
-#include "Interface/IComponent.h"
 #include "Interface/IExecutor.h"
 #include <string>
 #include <map>
@@ -17,8 +16,8 @@ public:
     void run();
 
 private:
-    std::map<std::string,ScopedPtr<IComponent> > m_components;
     ScopedPtr<IEXecutor> m_executor;
+    std::string m_configPath;
 };
 
 #endif // EGINX_H
