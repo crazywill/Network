@@ -18,6 +18,7 @@ public:
     ExecRet execute();
     void finalize();
     std::string name();
+    std::vector<ListenSocket> ListenSockets();
 private:
     void createListenfd();
     int forkWorkers();

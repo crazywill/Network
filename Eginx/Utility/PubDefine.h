@@ -6,4 +6,5 @@
 #define CONFIGREADER "ConfigReader"
 #define MASTER "Master"
 #define WORKER "Worker"
+#define EGXPROCMUTEX "EgxProcMutex"
 #endif // PUBDEFINE_H

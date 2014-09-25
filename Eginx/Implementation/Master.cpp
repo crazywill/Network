@@ -57,6 +57,11 @@ std::string Master::name()
     return m_name;
 }
 
+std::vector Master::ListenSockets()
+{
+    return m_listenSockets;
+}
+
 void Master::createListenfd()
 {
     std::vector<ListenSocket>::iterator it;

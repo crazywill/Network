@@ -30,6 +30,7 @@ void Eginx::run()
         case IEXecutor::WorkerStart:
             m_executor->finalize();
             m_executor.reset(new Worker());
+            m_executor->initialize();
             break;
         case IEXecutor::NormalReturn:
             //Do Nothing
