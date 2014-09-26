@@ -30,7 +30,7 @@ void Master::initialize()
     m_maxWorkers = m_configReader->workers();
 }
 
-IEXecutor::ExecRet Master::execute()
+IExecutor::ExecRet Master::execute()
 {
     int ret=0;
     createListenfd();
@@ -57,7 +57,7 @@ std::string Master::name()
     return m_name;
 }
 
-std::vector Master::ListenSockets()
+std::vector<ListenSocket> Master::ListenSockets()
 {
     return m_listenSockets;
 }

@@ -16,7 +16,7 @@ public:
     void run();
 
 private:
-    ScopedPtr<IEXecutor> m_executor;
+    ScopedPtr<IExecutor> m_executor;
     std::string m_configPath;
 };
 

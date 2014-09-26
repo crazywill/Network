@@ -26,3 +26,4 @@ HEADERS += \
     Interface/Egx_IProcMutex.h \
     Implementation/Egx_ProcMutex.h
 
+LIBS += -lrt

@@ -9,7 +9,7 @@
 #include <string>
 #include <map>
 #include <vector>
-class Master : public IEXecutor
+class Master : public IExecutor
 {
 public:
     Master(const std::string & cfgpath);

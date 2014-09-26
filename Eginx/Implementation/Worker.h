@@ -6,7 +6,7 @@
 #include "Utility/ScopedPtr.h"
 #include <string>
 #include <map>
-class Worker : public IEXecutor
+class Worker : public IExecutor
 {
 public:
     Worker();

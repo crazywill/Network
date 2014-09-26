@@ -15,7 +15,7 @@ void Worker::initialize()
 
 }
 
-IEXecutor::ExecRet Worker::execute()
+IExecutor::ExecRet Worker::execute()
 {
     return NormalReturn;
 }

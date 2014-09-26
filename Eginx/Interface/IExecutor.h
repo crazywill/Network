@@ -3,7 +3,7 @@
 
 #include <string>
 
-class IEXecutor
+class IExecutor
 {
 public:
     enum ExecRet{
@@ -11,7 +11,7 @@ public:
         NormalReturn,
         Invalid
     };
-    virtual ~IEXecutor(){}
+    virtual ~IExecutor(){}
     virtual void initialize() = 0;
     virtual ExecRet execute() = 0;
     virtual void finalize() = 0;
