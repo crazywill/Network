@@ -27,12 +27,12 @@ void Eginx::run()
     for(;;){
         ret = m_executor->execute();
         switch (ret) {
-        case IEXecutor::WorkerStart:
+        case IExecutor::WorkerStart:
             m_executor->finalize();
             m_executor.reset(new Worker());
             m_executor->initialize();
             break;
-        case IEXecutor::NormalReturn:
+        case IExecutor::NormalReturn:
             //Do Nothing
             break;
         default:
