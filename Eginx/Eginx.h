@@ -3,6 +3,7 @@
 
 #include "Utility/ScopedPtr.h"
 #include "Interface/IExecutor.h"
+#include "Interface/Egx_IProcMutex.h"
 #include <string>
 #include <map>
 #include <netinet/in.h>
@@ -18,6 +19,7 @@ public:
 private:
     ScopedPtr<IExecutor> m_executor;
     std::string m_configPath;
+    Egx_IProcMutex* m_procMutex;
 };
 
 #endif // EGINX_H

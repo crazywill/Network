@@ -35,7 +35,7 @@ std::vector<ListenSocket> ConfigReader::listenSockets()
 
 int ConfigReader::workers()
 {
-#ifdef Debug
+#ifdef TEST
     return 1;
 #else
     return m_workers;

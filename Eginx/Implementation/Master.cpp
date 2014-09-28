@@ -1,7 +1,7 @@
 #include "Master.h"
 #include "Implementation/Configreader.h"
 #include "Utility/PubDefine.h"
-#include "Utility/Log.h"
+#include "Utility/Egx_Log.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -76,10 +76,10 @@ void Master::createListenfd()
             servaddr.sin_addr.s_addr = htonl(inet_addr(lsocket.ip.c_str()));
             servaddr.sin_port = lsocket.port;
             if(bind(lsocket.fd,(const sockaddr*)&servaddr,sizeof(servaddr))==-1){
-                Log(LogError,"Bind Error!");
+                LogError("Bind Error!");
             }
             if(listen(lsocket.fd,LISTENQ)==-1){
-                Log(LogError,"Listen Error!");
+                LogError("Listen Error!");
             }
         }
         else if(lsocket.family == AF_INET6)

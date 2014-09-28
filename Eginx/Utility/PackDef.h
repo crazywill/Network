@@ -5,7 +5,6 @@
 #include <bits/sockaddr.h>
 #include <string>
 #include <bits/socket.h>
-#define Debug true
 
 struct ListenSocket
 {

@@ -7,7 +7,8 @@ SOURCES += main.cpp \
     Implementation/Master.cpp \
     Implementation/Worker.cpp \
     Implementation/Configreader.cpp \
-    Implementation/Egx_ProcMutex.cpp
+    Implementation/Egx_ProcMutex.cpp \
+    Utility/Egx_Log.cpp
 
 HEADERS += \
     Eginx.h \
@@ -22,8 +23,8 @@ HEADERS += \
     Interface/IConfigReader.h \
     Implementation/Configreader.h \
     Utility/PubDefine.h \
-    Utility/Log.h \
     Interface/Egx_IProcMutex.h \
-    Implementation/Egx_ProcMutex.h
+    Implementation/Egx_ProcMutex.h \
+    Utility/Egx_Log.h
 
 LIBS += -lrt
