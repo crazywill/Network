@@ -8,34 +8,45 @@ Worker::Worker(const std::vector<ListenSocket> &listenSockets,Egx_IProcMutex * m
     ,m_procMutex(mutex)
     ,m_epollfd(-1)
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
 }
 
 Worker::~Worker()
 {
-
+    LogDebug("Worker::%s\n",__FUNCTION__);
 }
 
 void Worker::initialize()
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     m_epollfd = epoll_create(EPOLLSIZE);
     m_clients.clear();
+    if(m_procMutex){
+        m_procMutex->initialize();
+    }
 }
 
 IExecutor::ExecRet Worker::execute()
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     bool lockhold;
     epoll_event events[EPOLLSIZE];
-    int eventnum;
+    int eventnum=0;
     for(;;)
     {
         if(m_procMutex){
-            if(lockhold=m_procMutex->tryLock()){
+            LogDebug("m_procMutex is not null\n");
+            lockhold=m_procMutex->tryLock();
+            LogDebug("lockhold is %d\n",lockhold);
+            if(lockhold){
                 addListenFD();
             }
             if(lockhold){
+                LogDebug("epoll_wait(m_epollfd,events,EPOLLSIZE,LOCKTIME)\n");
                 eventnum=epoll_wait(m_epollfd,events,EPOLLSIZE,LOCKTIME);
             }
             else{
+                LogDebug("epoll_wait(m_epollfd,events,EPOLLSIZE,UNLOCKTIME)\n");
                 eventnum=epoll_wait(m_epollfd,events,EPOLLSIZE,UNLOCKTIME);
             }
             for(int i=0; i<eventnum; ++i)
@@ -77,6 +88,7 @@ IExecutor::ExecRet Worker::execute()
             //do task
         }
         else{
+            LogDebug("epoll_wait(m_epollfd,events,EPOLLSIZE,UNLOCKTIME)\n");
             eventnum=epoll_wait(m_epollfd,events,EPOLLSIZE,UNLOCKTIME);
 
             for(int i=0; i<eventnum; ++i)
@@ -112,30 +124,39 @@ IExecutor::ExecRet Worker::execute()
 
 void Worker::finalize()
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     closeFD();
     m_clients.clear();
+    if(m_procMutex){
+        m_procMutex->finalize();
+    }
 }
 
 std::string Worker::name()
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     return m_name;
 }
 
 void Worker::addListenFD()
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     std::vector<ListenSocket>::iterator it;
     for(it = m_listenSockets.begin(); it != m_listenSockets.end(); ++it)
     {
         epoll_event event;
         ListenSocket & lsocket = *it;
-        event.data.fd = lsocket.fd;
-        event.events = EPOLLIN|EPOLLET;
-        epoll_ctl(m_epollfd,EPOLL_CTL_ADD,lsocket.fd,&event);
+        if(lsocket.fd != -1){
+            event.data.fd = lsocket.fd;
+            event.events = EPOLLIN|EPOLLET;
+            epoll_ctl(m_epollfd,EPOLL_CTL_ADD,lsocket.fd,&event);
+        }
     }
 }
 
 void Worker::addClientFD(int fd)
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     epoll_event event;
     event.data.fd = fd;
     event.events = EPOLLIN|EPOLLET;
@@ -144,6 +165,7 @@ void Worker::addClientFD(int fd)
 
 bool Worker::isListenFD(int fd)
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
     std::vector<ListenSocket>::iterator it;
     for(it = m_listenSockets.begin(); it != m_listenSockets.end(); ++it)
     {
@@ -157,4 +179,5 @@ bool Worker::isListenFD(int fd)
 
 void Worker::closeFD()
 {
+    LogDebug("Worker::%s\n",__FUNCTION__);
 }

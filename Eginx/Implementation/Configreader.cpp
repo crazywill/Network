@@ -30,7 +30,18 @@ std::string ConfigReader::name()
 
 std::vector<ListenSocket> ConfigReader::listenSockets()
 {
+#ifdef TEST
+    ListenSocket lsocket;
+    lsocket.fd = -1;
+    lsocket.family = AF_INET;
+    lsocket.hostname = "localhost";
+    lsocket.ip = "127.0.0.1";
+    lsocket.port = 36500;
+    m_listenSockets.push_back(lsocket);
     return m_listenSockets;
+#else
+    return m_listenSockets;
+#endif
 }
 
 int ConfigReader::workers()

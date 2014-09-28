@@ -1,7 +1,7 @@
 #include "Utility/Egx_Log.h"
 #include <stdarg.h>
 #include <stdio.h>
-void Log(LogLevel level, char *params, ...)
+void Log(LogLevel level, const char *params, ...)
 {
     va_list args;
     va_start(args,params);
@@ -9,16 +9,16 @@ void Log(LogLevel level, char *params, ...)
     vsnprintf(str, 1024 - 1, params, args);
     switch (level) {
     case Debug:
-        printf("%s: %s","Debug",str);
+        printf("[%ld][%s]: %s",getpid(),"Debug",str);
         break;
     case Normal:
-        printf("%s: %s","Normal",str);
+        printf("[%ld][%s]: %s",getpid(),"Normal",str);
         break;
     case Warning:
-        printf("%s: %s","Warning",str);
+        printf("[%ld][%s]: %s",getpid(),"Warning",str);
         break;
     case Error:
-        printf("%s: %s","Error",str);
+        printf("[%ld][%s]: %s",getpid(),"Error",str);
         break;
     case Invalid:
         break;

@@ -2,14 +2,17 @@
 #include "Implementation/Master.h"
 #include "Implementation/Worker.h"
 #include "Implementation/Egx_ProcMutex.h"
+#include "Utility/Egx_Log.h"
 Eginx::Eginx(const std::string &cfg)
     :m_configPath(cfg)
     ,m_procMutex(new Egx_ProcMutex())
 {
+    LogDebug("Eginx::%s\n",__FUNCTION__);
 }
 
 void Eginx::initialize()
 {
+    LogDebug("Eginx::%s\n",__FUNCTION__);
     //components and executor initialize
     m_executor.reset(new Master(m_configPath));
     m_executor->initialize();
@@ -18,6 +21,7 @@ void Eginx::initialize()
 
 void Eginx::finalize()
 {
+    LogDebug("Eginx::%s\n",__FUNCTION__);
     //components and executor finalize
     if(m_executor.get()){
         m_executor->finalize();
@@ -26,6 +30,7 @@ void Eginx::finalize()
 
 void Eginx::run()
 {
+    LogDebug("Eginx::%s\n",__FUNCTION__);
     int ret;
     for(;;){
         ret = m_executor->execute();

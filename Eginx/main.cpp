@@ -3,11 +3,17 @@
 //#include "Implementation/Egx_ProcMutex.h"
 //#include "Utility/ScopedPtr.h"
 #include "Utility/Egx_Log.h"
+#include "Eginx.h"
 using namespace std;
 
 int main()
 {
-    LogDebug("This is a test! a:%d b:%s c:%f\n",1,"a",1.02);
+    Eginx eginx("");
+    eginx.initialize();
+    eginx.run();
+    eginx.finalize();
+
+
 //    Log(LogDebug,"str:%s!\n","This is a test!");
 //    ScopedPtr<Egx_IProcMutex> mutex;
 //    mutex.reset(new Egx_ProcMutex());
