@@ -37,6 +37,7 @@ std::vector<ListenSocket> ConfigReader::listenSockets()
     lsocket.hostname = "localhost";
     lsocket.ip = "127.0.0.1";
     lsocket.port = 36500;
+
     m_listenSockets.push_back(lsocket);
     return m_listenSockets;
 #else

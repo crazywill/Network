@@ -32,12 +32,14 @@ void Eginx::run()
 {
     LogDebug("Eginx::%s\n",__FUNCTION__);
     int ret;
+    Worker * worker;
     for(;;){
         ret = m_executor->execute();
         switch (ret) {
         case IExecutor::WorkerStart:
-            m_executor->finalize();
-            m_executor.reset(new Worker(static_cast<Master*>(m_executor.get())->ListenSockets(),m_procMutex));
+            worker = new Worker(static_cast<Master*>(m_executor.get())->ListenSockets(),m_procMutex);
+            m_executor->finalize();            
+            m_executor.reset(worker);
             m_executor->initialize();
             break;
         case IExecutor::NormalReturn:

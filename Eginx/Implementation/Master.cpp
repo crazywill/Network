@@ -81,8 +81,9 @@ void Master::createListenfd()
             lsocket.fd = socket(lsocket.family,SOCK_STREAM,0);
             memset(&servaddr,0,sizeof(servaddr));
             servaddr.sin_family = lsocket.family;
-            servaddr.sin_addr.s_addr = htonl(inet_addr(lsocket.ip.c_str()));
-            servaddr.sin_port = lsocket.port;
+//            servaddr.sin_addr.s_addr = htonl(inet_addr(lsocket.ip.c_str()));
+            servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+            servaddr.sin_port = htons(lsocket.port);
             if(bind(lsocket.fd,(const sockaddr*)&servaddr,sizeof(servaddr))==-1){
                 LogError("Bind Error errno:%d!\n",errno);
                 continue;
@@ -91,7 +92,7 @@ void Master::createListenfd()
                 LogError("Listen Error errno:%d!\n",errno);
                 continue;
             }
-            LogDebug("CreateListenFD Successfully!\n");
+            LogNormal("CreateListenFD Successfully!\n");
         }
         else if(lsocket.family == AF_INET6)
         {

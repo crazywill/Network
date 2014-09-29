@@ -28,6 +28,7 @@ private:
     };
 
     void addListenFD();
+    void rmListenFD();
     void addClientFD(int fd);
     bool isListenFD(int fd);
     void closeFD();

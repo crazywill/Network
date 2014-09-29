@@ -2,6 +2,7 @@
 #include "Utility/PubDefine.h"
 #include "Utility/Egx_Log.h"
 #include <sys/epoll.h>
+#include <memory.h>
 Worker::Worker(const std::vector<ListenSocket> &listenSockets,Egx_IProcMutex * mutex)
     :m_name(WORKER)
     ,m_listenSockets(listenSockets)
@@ -32,6 +33,9 @@ IExecutor::ExecRet Worker::execute()
     bool lockhold;
     epoll_event events[EPOLLSIZE];
     int eventnum=0;
+    int line=0;
+    char buf[1024];
+    std::string str;
     for(;;)
     {
         if(m_procMutex){
@@ -53,14 +57,25 @@ IExecutor::ExecRet Worker::execute()
             {
                 if(lockhold && isListenFD(events[i].data.fd)){
                     ClientData client;
+                    LogNormal("Accepted a new connection:%d!\n",events[i].data.fd);
                     int acceptFD = accept(events[i].data.fd,(sockaddr *)&client.clientAddr,&client.clientLen);
                     if(acceptFD){
                         m_clients.push_back(client);
                         addClientFD(acceptFD);
                     }
                 }
-                else if(events[i].events&EPOLLIN){
+                if(events[i].events&EPOLLIN){
                     // data read
+                    LogNormal("%d connection is ready to read!\n",events[i].data.fd);
+
+                    str="";
+                    memset(buf,0,1024);
+                    while(line=read(events[i].data.fd,buf,4)>0){
+                        str.append(buf);
+                        memset(buf,0,1024);
+                    }
+                    LogNormal("Content[%d]: %s\n",events[i].data.fd,str.c_str());
+
                     if(lockhold){
 //                        postTask();
                         LogDebug("postTask()\n");
@@ -70,8 +85,9 @@ IExecutor::ExecRet Worker::execute()
                         LogDebug("doTask()\n");
                     }
                 }
-                else if(events[i].events&EPOLLOUT){
+                if(events[i].events&EPOLLOUT){
                     // data write
+                    LogNormal("%d connection is ready to write!\n",events[i].data.fd);
                     if(lockhold){
 //                        postTask();
                         LogDebug("postTask()\n");
@@ -84,6 +100,7 @@ IExecutor::ExecRet Worker::execute()
             }
             if(lockhold){
                 m_procMutex->unlock();
+                rmListenFD();
             }
             //do task
         }
@@ -95,6 +112,14 @@ IExecutor::ExecRet Worker::execute()
             {
                 if(events[i].events&EPOLLIN){
                     // data read
+                    str="";
+                    memset(buf,0,1024);
+                    while(line=read(events[i].data.fd,buf,1024)>0){
+                        str.append(buf);
+                        memset(buf,0,1024);
+                    }
+                    LogNormal("Content[%d]: %s\n",events[i].data.fd,str.c_str());
+
                     if(lockhold){
 //                        postTask();
                         LogDebug("postTask()\n");
@@ -104,7 +129,7 @@ IExecutor::ExecRet Worker::execute()
                         LogDebug("doTask()\n");
                     }
                 }
-                else if(events[i].events&EPOLLOUT){
+                if(events[i].events&EPOLLOUT){
                     // data write
                     if(lockhold){
 //                        postTask();
@@ -140,7 +165,7 @@ std::string Worker::name()
 
 void Worker::addListenFD()
 {
-    LogDebug("Worker::%s\n",__FUNCTION__);
+    LogDebug("Worker::%s %d\n",__FUNCTION__,m_listenSockets.size());
     std::vector<ListenSocket>::iterator it;
     for(it = m_listenSockets.begin(); it != m_listenSockets.end(); ++it)
     {
@@ -149,7 +174,25 @@ void Worker::addListenFD()
         if(lsocket.fd != -1){
             event.data.fd = lsocket.fd;
             event.events = EPOLLIN|EPOLLET;
+            LogDebug("Add Listen FD:%d\n",lsocket.fd);
             epoll_ctl(m_epollfd,EPOLL_CTL_ADD,lsocket.fd,&event);
+        }
+    }
+}
+
+void Worker::rmListenFD()
+{
+    LogDebug("Worker::%s %d\n",__FUNCTION__,m_listenSockets.size());
+    std::vector<ListenSocket>::iterator it;
+    for(it = m_listenSockets.begin(); it != m_listenSockets.end(); ++it)
+    {
+        epoll_event event;
+        ListenSocket & lsocket = *it;
+        if(lsocket.fd != -1){
+            event.data.fd = lsocket.fd;
+            event.events = EPOLLIN|EPOLLET;
+            LogDebug("rm Listen FD:%d\n",lsocket.fd);
+            epoll_ctl(m_epollfd,EPOLL_CTL_DEL,lsocket.fd,&event);
         }
     }
 }

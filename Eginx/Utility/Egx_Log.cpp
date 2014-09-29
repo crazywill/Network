@@ -9,7 +9,7 @@ void Log(LogLevel level, const char *params, ...)
     vsnprintf(str, 1024 - 1, params, args);
     switch (level) {
     case Debug:
-        printf("[%ld][%s]: %s",getpid(),"Debug",str);
+//        printf("[%ld][%s]: %s",getpid(),"Debug",str);
         break;
     case Normal:
         printf("[%ld][%s]: %s",getpid(),"Normal",str);
