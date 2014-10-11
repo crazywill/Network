@@ -1,7 +1,6 @@
 #include "AIOimpl"
 
-//return eventfd
-int AIOImpl::AIORead(std::string path,void *buf,int epfd=-1)
+int AIOImpl::AIORead(std::string path)
 {
     m_filefd = openFile(path);
     if (-1 == m_filefd) {
@@ -13,29 +12,26 @@ int AIOImpl::AIORead(std::string path,void *buf,int epfd=-1)
         perror("io_setup");
         return -1;
     }
-
-    if (posix_memalign(&buf, ALIGN_SIZE, RD_WR_SIZE)) {
+    m_data.size = RD_WR_SIZE;
+    if (posix_memalign(&m_data.buf, ALIGN_SIZE, RD_WR_SIZE)) {
         perror("posix_memalign");
         return 5;
     }
-    printf("buf: %p\n", buf);
+    printf("buf: %p\n", m_data.buf);
 
-    for (i = 0, iocbp = iocbs; i < NUM_EVENTS; ++i, ++iocbp) {
-        iocbps[i] = &iocbp->iocb;
-        io_prep_pread(&iocbp->iocb, fd, buf, RD_WR_SIZE, i * RD_WR_SIZE);
-        io_set_eventfd(&iocbp->iocb, efd);
-        io_set_callback(&iocbp->iocb, aio_callback);
-        iocbp->nth_request = i + 1;
-    }
+	io_prep_pread(&m_iocb.iocb, fd, m_data.buf, RD_WR_SIZE, 0);
+	io_set_eventfd(&m_iocb.iocb, efd);
+	io_set_callback(&m_iocb.iocb, aio_callback);
+	m_iocb.nth_request = 1;
 
-    if (io_submit(ctx, NUM_EVENTS, iocbps) != NUM_EVENTS) {
+    if (io_submit(ctx, 1, &m_iocbp) != 1) {
         perror("io_submit");
         return -1;
     }
     return 0;
 }
 
-int AIOImpl::AIOWrite(std::string path,char *buf,int epfd=-1)
+int AIOImpl::AIOWrite(std::string path)
 {
     m_filefd = openFile(path);
     if (-1 == m_filefd) {
@@ -46,7 +42,7 @@ int AIOImpl::AIOWrite(std::string path,char *buf,int epfd=-1)
 }
 
 //featch result
-int AIOImpl::onAIO(long &res, long &res2)
+boost::shared_ptr<AIOINFO_> AIOImpl::onAIO()
 {
 
 	uint64_t finished_aio;
@@ -58,22 +54,19 @@ int AIOImpl::onAIO(long &res, long &res2)
 
 	printf("finished io number: %"PRIu64"\n", finished_aio);
 
-	while (finished_aio > 0) {
+	if (finished_aio > 0) {
 		tms.tv_sec = 0;
 		tms.tv_nsec = 0;
-		r = io_getevents(ctx, 1, NUM_EVENTS, events, &tms);
+		r = io_getevents(ctx, 1, 1, &events, &tms);
 		if (r > 0) {
-			for (j = 0; j < r; ++j) {
-				((io_callback_t)(events[j].data))(ctx, events[j].obj, events[j].res, events[j].res2);
-			}
-			i += r;
-			finished_aio -= r;
+			((io_callback_t)(events.data))(ctx, events.obj, events.res, events.res2);
 		}
+
 	}
 
-	return 0;
+	boost::shared_ptr<AIOINFO_> result(new AIOINFO_);
+	result.res = true;
+	result.data = m_data;
+	return result;
 }
-
-
-
 
